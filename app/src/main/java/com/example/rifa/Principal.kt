@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 
 @Composable
 fun PrincipalScreen(context: Context) {
@@ -52,12 +53,20 @@ fun PrincipalScreen(context: Context) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 4.dp)
+                        .clickable {
+                            val intent = Intent(context, RifaDetalle::class.java).apply {
+                                putExtra("nombre", rifa.nombre)
+                                putExtra("fecha", rifa.fecha)
+                                putExtra("inscritos", rifa.inscritos)
+                            }
+                            context.startActivity(intent)
+                        },
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Nombre: ${rifa.nombre}", style = MaterialTheme.typography.titleMedium)
-                        Text("Inscritos: ${rifa.inscritos.toString()}")
+                        Text("Inscritos: ${rifa.inscritos}")
                         Text("Fecha: ${rifa.fecha}")
                     }
                 }

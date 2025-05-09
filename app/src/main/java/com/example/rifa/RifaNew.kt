@@ -81,7 +81,7 @@ fun NewRifaScreen(context: Context) {
         Button(
             onClick = {
                 if (nombre.isNotBlank() && fecha.isNotBlank()) {
-                    db.insertarRifa(nombre, 0, fecha) // Inicializamos inscritos en 0
+                    db.insertarRifa(nombre,  fecha)
                     (contextCompose as? ComponentActivity)?.finish() // Volver a la actividad anterior
                 }
             },

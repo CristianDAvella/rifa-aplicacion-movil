@@ -25,20 +25,21 @@ class RifaDetalle : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val nombre = intent.getStringExtra("nombre") ?: ""
         val fecha = intent.getStringExtra("fecha") ?: ""
-        val inscritos = intent.getIntExtra("inscritos", 0)
         setContent {
-            RifaDetalleScreen(nombre, fecha, inscritos)
+            RifaDetalleScreen(nombre, fecha, this)
         }
     }
 }
 
 @Composable
-fun RifaDetalleScreen(nombre: String, fecha: String, inscritos: Int) {
-    val context = LocalContext.current
-    var boletoGanador by remember { mutableStateOf("") }
-    var inhabilitar by remember { mutableStateOf(false) }
-    val numerosDisponibles = List(100) { it }
-    val numerosNoDisponibles = remember { numerosDisponibles.shuffled().take(inscritos) }
+fun RifaDetalleScreen(nombre: String, fecha: String, context: Context) {
+    val db = remember(context) { BD(context) }
+    val numeros = remember { mutableStateListOf<Pair<Int, Boolean>>() }
+
+    LaunchedEffect(Unit) {
+        numeros.clear()
+        numeros.addAll(db.obtenerNumeros(nombre).sortedBy { it.first })
+    }
 
     Column(
         modifier = Modifier
@@ -47,44 +48,36 @@ fun RifaDetalleScreen(nombre: String, fecha: String, inscritos: Int) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text("Rifa: $nombre", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+        Text("Fecha: $fecha")
         Spacer(modifier = Modifier.height(16.dp))
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(10),
-            modifier = Modifier.height(300.dp)
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            items(numerosDisponibles) { numero ->
-                val estaInhabilitado = numero in numerosNoDisponibles
+            items(numeros) { (numero, comprado) ->
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
-                        .size(32.dp)
-                        .padding(2.dp)
-                        .background(if (estaInhabilitado) Color(0xFFE1BEE7) else Color.White)
+                        .aspectRatio(1f)
+                        .background(if (comprado) Color.Gray else Color.White)
+                        .clickable {
+                            val idx = numeros.indexOfFirst { it.first == numero }
+                            if (idx != -1) {
+                                numeros[idx] = numero to !comprado
+                            }
+                        }
                 ) {
-                    Text(numero.toString().padStart(2, '0'))
+                    Text(
+                        numero.toString().padStart(2, '0'),
+                        color = if (comprado) Color.White else Color.Black
+                    )
                 }
             }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = boletoGanador,
-            onValueChange = { boletoGanador = it },
-            label = { Text("Boleto ganador") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Inhabilitar")
-            Spacer(modifier = Modifier.width(8.dp))
-            Switch(checked = inhabilitar, onCheckedChange = { inhabilitar = it })
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -93,12 +86,27 @@ fun RifaDetalleScreen(nombre: String, fecha: String, inscritos: Int) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Button(onClick = { /* Guardar lógica aquí */ }) {
+            Button(onClick = {
+                val seleccionados = numeros.filter { it.second }.map { it.first }.toSet()
+                db.actualizarNumeros(nombre, seleccionados)
+                (context as? ComponentActivity)?.apply {
+                    finish()
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+                }
+            }) {
                 Text("Guardar")
             }
-            Button(onClick = { /* Eliminar lógica aquí */ }, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
+
+            Button(onClick = {
+                db.eliminarRifa(nombre)
+                (context as? ComponentActivity)?.apply {
+                    finish()
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
+                }
+            }, colors = ButtonDefaults.buttonColors(containerColor = Color.Red)) {
                 Text("Eliminar")
             }
         }
     }
 }
+

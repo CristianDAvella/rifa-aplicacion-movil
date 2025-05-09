@@ -14,6 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 fun PrincipalScreen(context: Context) {
@@ -21,14 +24,26 @@ fun PrincipalScreen(context: Context) {
     var searchText by remember { mutableStateOf("") }
     var rifas by remember { mutableStateOf(db.obtenerRifas()) } // Carga inicial de las rifas
     val localContext = LocalContext.current
-
-
+    val lifecycleOwner = LocalLifecycleOwner.current
     val nuevoRifaLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
 
         rifas = db.obtenerRifas(searchText)
     }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                rifas = db.obtenerRifas(searchText) // <-- se recarga al volver
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {

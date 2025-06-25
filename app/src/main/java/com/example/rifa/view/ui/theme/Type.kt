@@ -1,4 +1,4 @@
-package com.example.rifa.ui.theme
+package com.example.rifa.view.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

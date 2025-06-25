@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.rifa.viewmodel.PrincipalViewModel
+import android.app.Activity
 
 @Composable
 fun Principal() {
@@ -25,9 +26,12 @@ fun Principal() {
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
-    ) {
-        viewModel.recargarSubastas()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            viewModel.recargarSubastas()
+        }
     }
+
 
     LaunchedEffect(Unit) {
         viewModel.cargarSubastas()

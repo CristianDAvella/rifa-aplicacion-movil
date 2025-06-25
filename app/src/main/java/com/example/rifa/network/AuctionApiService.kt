@@ -13,7 +13,7 @@ interface AuctionApiService {
     suspend fun getAuctions(): List<Auction>
 
     @POST("auctions")
-    suspend fun createAuction(@Body auction: CreateAuction): Auction
+    suspend fun createAuction(@Body auction: CreateAuction)
 
     @GET("auctions/{title}")
     suspend fun getAuctionDetail(@Path("title") title: String): Auction

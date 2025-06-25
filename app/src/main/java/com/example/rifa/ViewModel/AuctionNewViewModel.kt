@@ -25,11 +25,21 @@ class AuctionNewViewModel : ViewModel() {
         _endDate.value = nuevaFecha
     }
 
-
     fun guardarAuction(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val success = repository.createAuction(_title.value, _endDate.value)
-            onResult(success)
+            if (_title.value.isBlank() || _endDate.value.isBlank()) {
+                Log.e("AuctionNewViewModel", "Título o fecha vacíos")
+                onResult(false)
+                return@launch
+            }
+
+            try {
+                val result = repository.createAuction(_title.value, _endDate.value)
+                onResult(result)
+            } catch (e: Exception) {
+                Log.e("AuctionNewViewModel", "Error al guardar subasta", e)
+                onResult(false)
+            }
         }
     }
 }

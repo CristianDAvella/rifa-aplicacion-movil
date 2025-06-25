@@ -1,8 +1,8 @@
 package com.example.rifa.model
 data class Auction(
     val title: String,
-    val description: String?, // Puede ser null
-    val end_time: String,     // Formato ISO 8601
+    val description: String?,
+    val end_time: String,
     val bids: List<Bid> = emptyList()
 )
 

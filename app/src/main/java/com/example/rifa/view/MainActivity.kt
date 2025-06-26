@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             RifaTheme {
-                // Obtenemos el Context local dentro del contexto Composable
+
                 Principal()
             }
         }

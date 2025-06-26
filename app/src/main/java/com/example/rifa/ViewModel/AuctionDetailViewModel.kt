@@ -32,7 +32,7 @@ class AuctionDetailViewModel : ViewModel() {
     private fun loadAuctionDetail() {
         viewModelScope.launch {
             try {
-                val auction = repository.getAuctionDetail(auctionId) // 👈 usa el ID aquí
+                val auction = repository.getAuctionDetail(auctionId)
                 _bids.value = auction.bids
                 Log.d("AuctionDetailVM", "Pujas recibidas: ${auction.bids}")
             } catch (e: Exception) {
@@ -79,7 +79,7 @@ class AuctionDetailViewModel : ViewModel() {
     fun deleteAuction(onFinished: () -> Unit) {
         viewModelScope.launch {
             try {
-                val response = repository.deleteAuction(auctionId) // 👈 usa el ID
+                val response = repository.deleteAuction(auctionId)
                 if (response.isSuccessful) {
                     onFinished()
                 } else {

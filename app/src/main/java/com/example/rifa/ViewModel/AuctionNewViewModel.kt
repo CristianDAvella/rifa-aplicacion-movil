@@ -48,7 +48,7 @@ class AuctionNewViewModel : ViewModel() {
             }
 
             val auction = Auction(
-                id = UUID.randomUUID().toString(), // necesitas importarlo
+                id = UUID.randomUUID().toString(),
                 title = title,
                 description = description,
                 end_time = endDate,

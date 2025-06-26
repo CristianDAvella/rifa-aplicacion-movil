@@ -3,7 +3,7 @@ package com.example.rifa.repository
 import com.example.rifa.model.Auction
 import retrofit2.Response
 import com.example.rifa.network.RetrofitInstance
-import com.example.rifa.model.Bid
+import com.example.rifa.model.BidRequest
 
 class AuctionRepository {
     private val api = RetrofitInstance.api
@@ -12,16 +12,17 @@ class AuctionRepository {
         return api.getAuctions()
     }
 
-    suspend fun getAuctionDetail(title: String): Auction {
-        return api.getAuctionDetail(title)
+    suspend fun getAuctionDetail(id: String): Auction {
+        return api.getAuctionDetail(id)
     }
 
-    suspend fun deleteAuction(title: String) {
-        api.deleteAuction(title)
+    suspend fun deleteAuction(id: String): Response<Unit> {
+        return api.deleteAuction(id)
     }
 
-    suspend fun postBid(title: String, bid: Bid): Response<Unit> {
-        return api.postBid(title, bid)
+
+    suspend fun postBid(auctionId: String, bid: BidRequest): Response<Unit> {
+        return api.postBid(auctionId, bid)
     }
 
 

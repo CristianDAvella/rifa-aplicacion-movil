@@ -5,18 +5,23 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.rifa.viewmodel.AuctionDetailViewModel
-import androidx.compose.foundation.lazy.grid.*
+import android.app.Activity
+import androidx.compose.ui.platform.LocalContext
+
 
 class AuctionDetail : ComponentActivity() {
     private val viewModel: AuctionDetailViewModel by viewModels()
@@ -24,15 +29,17 @@ class AuctionDetail : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val auctionId = intent.getStringExtra("id") ?: "" // Este es el id real
         val title = intent.getStringExtra("title") ?: ""
         val fecha = intent.getStringExtra("end_time") ?: ""
 
-        if (title.isBlank()) {
+        if (auctionId.isBlank() || title.isBlank()) {
             finish()
             return
         }
 
-        viewModel.setAuctionTitle(title)
+        // ✅ Solo se llama una vez y con parámetros correctos
+        viewModel.setAuction(auctionId, title)
 
         setContent {
             AuctionDetailScreen(
@@ -44,6 +51,7 @@ class AuctionDetail : ComponentActivity() {
         }
     }
 }
+
 @Composable
 fun AuctionDetailScreen(
     title: String,
@@ -52,13 +60,13 @@ fun AuctionDetailScreen(
     onClose: () -> Unit
 ) {
     val bids by viewModel.bids.collectAsState()
-
-    // Estado local para la UI
-    var selectedSeat by remember { mutableStateOf<String?>(null) }
-    var bidAmount by remember { mutableStateOf("") }
-
     val seatNumbers = (0..99).map { it.toString().padStart(2, '0') }
     val occupiedSeats = bids.map { it.user }
+    val highestBid = bids.maxByOrNull { it.amount }
+    val context = LocalContext.current
+    var selectedSeat by remember { mutableStateOf<String?>(null) }
+    var bidAmount by remember { mutableStateOf("") }
+    val activity = context as? Activity
 
     Column(
         modifier = Modifier
@@ -68,6 +76,10 @@ fun AuctionDetailScreen(
     ) {
         Text("Subasta: $title", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Text("Fecha de cierre: $fecha")
+        highestBid?.let {
+            Text("Puja más alta: $${it.amount} (Asiento ${it.user})", fontWeight = FontWeight.Medium)
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Text("Asientos disponibles", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
@@ -87,10 +99,10 @@ fun AuctionDetailScreen(
                 Box(
                     modifier = Modifier
                         .padding(4.dp)
-                        .size(32.dp)
+                        .size(48.dp)
                         .background(
                             when {
-                                isOccupied -> Color.Red
+                                isOccupied -> Color(0xFF90CAF9)
                                 selectedSeat == seat -> Color.Cyan
                                 else -> Color.LightGray
                             }
@@ -102,11 +114,7 @@ fun AuctionDetailScreen(
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        seat,
-                        fontSize = 16.sp,
-                        color = if (isOccupied) Color.White else Color.Black
-                    )
+                    Text(seat, fontSize = 13.sp, color = if (isOccupied) Color.White else Color.Black)
                 }
             }
         }
@@ -149,16 +157,27 @@ fun AuctionDetailScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            Button(onClick = onClose) {
+            Button(onClick = {
+                (context as? Activity)?.setResult(Activity.RESULT_OK)
+                onClose()
+            }) {
                 Text("Cerrar")
             }
 
+
+
             Button(
-                onClick = { viewModel.deleteAuction { onClose() } },
+                onClick = {
+                    viewModel.deleteAuction {
+                        activity?.setResult(Activity.RESULT_OK)
+                        activity?.finish()
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
             ) {
                 Text("Eliminar")
             }
+
         }
     }
 }

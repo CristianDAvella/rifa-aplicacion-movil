@@ -8,7 +8,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.Response
-import com.example.rifa.model.Bid
+import com.example.rifa.model.BidRequest
 
 
 interface AuctionApiService {
@@ -18,12 +18,15 @@ interface AuctionApiService {
     @POST("auctions/")
     suspend fun postAuction(@Body auction: Auction): Response<Auction>
 
-    @GET("auctions/{title}")
-    suspend fun getAuctionDetail(@Path("title") title: String): Auction
+    @GET("auctions/{id}")
+    suspend fun getAuctionDetail(@Path("id") id: String): Auction
 
-    @POST("auctions/{title}/bids")
-    suspend fun postBid(@Path("title") title: String, @Body bid: Bid): Response<Unit>
 
-    @DELETE("auctions/{title}")
-    suspend fun deleteAuction(@Path("title") title: String)
+    @POST("auctions/{auction_id}/bids")
+    suspend fun postBid(@Path("auction_id") auctionId: String, @Body bid: BidRequest): Response<Unit>
+
+
+    @DELETE("auctions/{id}")
+    suspend fun deleteAuction(@Path("id") id: String): Response<Unit>
+
 }

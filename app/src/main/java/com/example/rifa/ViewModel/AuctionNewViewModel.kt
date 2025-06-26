@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.util.Log
 import com.example.rifa.model.Auction
+import java.util.UUID
 
 
 class AuctionNewViewModel : ViewModel() {
@@ -47,11 +48,13 @@ class AuctionNewViewModel : ViewModel() {
             }
 
             val auction = Auction(
+                id = UUID.randomUUID().toString(), // necesitas importarlo
                 title = title,
                 description = description,
                 end_time = endDate,
                 bids = emptyList()
             )
+
 
             try {
                 val response = repository.postAuction(auction)

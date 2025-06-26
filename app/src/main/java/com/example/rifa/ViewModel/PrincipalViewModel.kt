@@ -1,45 +1,47 @@
 package com.example.rifa.viewmodel
 
-import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.example.rifa.model.Auction
+import com.example.rifa.model.AuctionWithMaxBid
 import com.example.rifa.repository.AuctionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import android.util.Log
+
 class PrincipalViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = AuctionRepository()
 
-    private val _auctions = MutableStateFlow<List<Auction>>(emptyList())
-    val auctions: StateFlow<List<Auction>> = _auctions
+    private val _auctions = MutableStateFlow<List<AuctionWithMaxBid>>(emptyList())
+    val auctions: StateFlow<List<AuctionWithMaxBid>> = _auctions
 
     private val _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> = _searchText
 
-    fun actualizarBusqueda(texto: String) {
-        _searchText.value = texto
+    fun actualizarBusqueda(text: String) {
+        _searchText.value = text
     }
-    fun probarConexion() {
-        viewModelScope.launch {
-            try {
-                val auctions = repository.getAuctions()
-                Log.d("API Test", "Conectado. Total subastas: ${auctions.size}")
-            } catch (e: Exception) {
-                Log.e("API Test", "Error al conectarse: ${e.message}", e)
-            }
-        }
-    }
-
 
     fun cargarSubastas() {
         viewModelScope.launch {
             try {
-                val todas = repository.getAuctions()
-                _auctions.value = todas.filter {
-                    it.title.contains(_searchText.value, ignoreCase = true)
+                val result = repository.getAuctions()
+                val filtradas = if (_searchText.value.isNotBlank()) {
+                    result.filter { it.title.contains(_searchText.value, ignoreCase = true) }
+                } else {
+                    result
+                }
+
+                _auctions.value = filtradas.map { auction ->
+                    AuctionWithMaxBid(
+                        id = auction.id,
+                        title = auction.title,
+                        end_time = auction.end_time,
+                        bidsCount = auction.bids.size,
+                        maxBid = auction.bids.maxByOrNull { it.amount }?.amount ?: 0.0
+                    )
                 }
             } catch (e: Exception) {
                 _auctions.value = emptyList()

@@ -7,7 +7,7 @@ import com.example.rifa.repository.AuctionRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-
+import android.util.Log
 class AuctionDetailViewModel : ViewModel() {
     private val repository = AuctionRepository()
 
@@ -23,16 +23,49 @@ class AuctionDetailViewModel : ViewModel() {
 
     private fun loadAuctionDetail() {
         viewModelScope.launch {
-            val auction = repository.getAuctionDetail(auctionTitle)
-            _bids.value = auction.bids
+            try {
+                val auction = repository.getAuctionDetail(auctionTitle)
+                _bids.value = auction.bids
+            } catch (e: Exception) {
+                Log.e("AuctionDetailVM", "Error al cargar detalles", e)
+            }
         }
     }
+
 
     fun toggleBidSelection(user: String) {
         _bids.value = _bids.value.map {
             if (it.user == user) it.copy(amount = if (it.amount > 0.0) 0.0 else 1.0) else it
         }
     }
+    fun agregarPuja(asiento: String, monto: Double) {
+        val nuevaPuja = Bid(
+            user = asiento,
+            amount = monto,
+            timestamp = System.currentTimeMillis().toString()
+        )
+
+        Log.d("Puja", "Preparando para enviar puja: $nuevaPuja")  // 👈
+
+        viewModelScope.launch {
+            try {
+                val response = repository.postBid(auctionTitle, nuevaPuja)
+                Log.d("Puja", "POST ejecutado. Código: ${response.code()}")  // 👈
+
+                if (response.isSuccessful) {
+                    Log.d("Puja", "Puja enviada con éxito")
+                    loadAuctionDetail() // actualiza lista de asientos ocupados
+                } else {
+                    Log.e("Puja", "Error: ${response.errorBody()?.string()}")
+                }
+            } catch (e: Exception) {
+                Log.e("Puja", "Excepción al enviar puja", e)
+            }
+        }
+    }
+
+
+
 
     fun deleteAuction(onFinished: () -> Unit) {
         viewModelScope.launch {

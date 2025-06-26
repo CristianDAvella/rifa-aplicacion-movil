@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import android.util.Log
+import com.example.rifa.model.Auction
+
 
 class AuctionNewViewModel : ViewModel() {
     private val repository = AuctionRepository()
@@ -20,6 +22,13 @@ class AuctionNewViewModel : ViewModel() {
     fun actualizarTitulo(nuevoTitulo: String) {
         _title.value = nuevoTitulo
     }
+    private val _description = MutableStateFlow("")
+    val description: StateFlow<String> = _description
+
+    fun actualizarDescripcion(nuevaDescripcion: String) {
+        _description.value = nuevaDescripcion
+    }
+
 
     fun actualizarFecha(nuevaFecha: String) {
         _endDate.value = nuevaFecha
@@ -27,19 +36,39 @@ class AuctionNewViewModel : ViewModel() {
 
     fun guardarAuction(onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            if (_title.value.isBlank() || _endDate.value.isBlank()) {
+            val title = _title.value.trim()
+            val description = _description.value.trim()
+            val endDate = _endDate.value.trim()
+
+            if (title.isBlank() || endDate.isBlank()) {
                 Log.e("AuctionNewViewModel", "Título o fecha vacíos")
                 onResult(false)
                 return@launch
             }
 
+            val auction = Auction(
+                title = title,
+                description = description,
+                end_time = endDate,
+                bids = emptyList()
+            )
+
             try {
-                val result = repository.createAuction(_title.value, _endDate.value)
-                onResult(result)
+                val response = repository.postAuction(auction)
+                if (response.isSuccessful) {
+                    Log.d("AuctionNewViewModel", "Subasta creada correctamente")
+                    onResult(true)
+                } else {
+                    val error = response.errorBody()?.string().orEmpty()
+                    Log.e("AuctionNewViewModel", "Falló la creación: $error")
+                    onResult(false)
+                }
             } catch (e: Exception) {
                 Log.e("AuctionNewViewModel", "Error al guardar subasta", e)
                 onResult(false)
             }
         }
     }
+
+
 }

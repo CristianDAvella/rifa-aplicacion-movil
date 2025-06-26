@@ -1,12 +1,12 @@
 package com.example.rifa.repository
 
 import com.example.rifa.model.Auction
-import com.example.rifa.model.CreateAuction
-import com.example.rifa.network.RetrofitClient
-import android.util.Log
+import retrofit2.Response
+import com.example.rifa.network.RetrofitInstance
+import com.example.rifa.model.Bid
 
 class AuctionRepository {
-    private val api = RetrofitClient.apiService
+    private val api = RetrofitInstance.api
 
     suspend fun getAuctions(): List<Auction> {
         return api.getAuctions()
@@ -20,17 +20,12 @@ class AuctionRepository {
         api.deleteAuction(title)
     }
 
-    suspend fun createAuction(title: String, endTime: String): Boolean {
-        return try {
-            val auction = CreateAuction(title, endTime)
-            Log.d("AuctionRepository", "Intentando crear subasta: $auction")
-            api.createAuction(auction)
-            true
-        } catch (e: Exception) {
-            Log.e("AuctionRepository", "Error al crear subasta", e)
-            false
-        }
+    suspend fun postBid(title: String, bid: Bid): Response<Unit> {
+        return api.postBid(title, bid)
     }
 
 
+    suspend fun postAuction(auction: Auction): Response<Auction> {
+        return api.postAuction(auction)
+    }
 }
